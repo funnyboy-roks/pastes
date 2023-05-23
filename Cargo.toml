@@ -1,0 +1,20 @@
+[package]
+name = "pastes"
+version = "0.1.0"
+edition = "2021"
+authors = ["funnyboy_roks <funnyboyroks@gmail.com>"]
+description = "Pastes is a simple tool to upload files and text to pastes.dev or bytebin.lucko.me"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.71"
+clap = { version = "4.3.0", features = ["derive"] }
+directories = "5.0.1"
+flate2 = "1.0.26"
+mime = "0.3.17"
+mime_guess = "2.0.4"
+reqwest = { version = "0.11.18", features = ["json", "gzip", "mime_guess", "blocking"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+toml = "0.7.4"

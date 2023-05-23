@@ -1,0 +1,22 @@
+# Config file for pastes-cli
+
+# The default content type to use when the `--content-type` flag is not specified and the program
+# cannot determine it from the file extension
+# If you don't know what this means, it's probably best to just leave it as the default
+#content-type = "text/plain"
+
+# The user agent that should be used by the program when sending api request to the server.
+# This is explicitly requested by Lucko in the READMEs on GitHub: 
+#     - https://github.com/lucko/paste#pastesdev-api
+#     - https://github.com/lucko/bytebin#post
+# The default value for this includes information about the program.  This is not necessary to
+# change, unless you have a specific reason.
+#user-agent = ""
+
+# Add custom headers to be sent with the request to the server
+#
+# If `user-agent`, `content-type`, or `content-encoding` are set, it will be ignored and the
+# program will still set the value like normal
+#
+#[headers]
+#accept = "text/plain"
