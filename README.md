@@ -45,6 +45,20 @@ theoretically work on other platforms.
 cargo install pastes
 ```
 
+## Todo
+
+A few items on the todo list:
+
+- [ ] Add the ability to download from pastes.dev and bytebin
+    - Either detecting in the url itself or add a `--download` flag that
+      will treat the file as a url or key
+    - Use the [`mime2ext`](https://crates.io/crates/mime2ext) crate to guess the file extension and write to that
+- [ ] Perhaps switch to tokio and non-blocking reqwest to allow streams
+    - Via stream feature on reqwest (which requires tokio)
+- [ ] Add ability to use alternate locations hosting paste/bytebin
+  instances
+- [ ] More mimetype matching to determine which service to use
+
 ## Contributing
 
 Please feel free to open an issue or pull request if you find a bug or
