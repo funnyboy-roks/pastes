@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 authors = ["funnyboy_roks <funnyboyroks@gmail.com>"]
 description = "Pastes is a simple tool to upload files and text to pastes.dev or bytebin.lucko.me"
+homepage = "https://github.com/funnyboy-roks/pastes"
+repository = "https://github.com/funnyboy-roks/pastes"
+license = "Apache 2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
