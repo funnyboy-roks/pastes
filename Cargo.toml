@@ -1,6 +1,6 @@
 [package]
 name = "pastes"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["funnyboy_roks <funnyboyroks@gmail.com>"]
 description = "Pastes is a simple tool to upload files and text to pastes.dev or bytebin.lucko.me"
