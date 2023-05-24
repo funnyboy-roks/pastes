@@ -1,5 +1,6 @@
 use anyhow::Context;
 use flate2::Compression;
+use humanize_bytes::humanize_bytes_binary;
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
@@ -44,25 +45,31 @@ struct PostResponse {
 }
 
 #[derive(Debug, Clone, Serialize)]
-struct ProgramOutput {
-    key: String,
+struct ProgramOutput<'a> {
+    key: &'a str,
     service: cli::Service,
-    url: String,
+    url: &'a str,
     zipped: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::try_parse()?;
-    let config = Config::load_config(cli.config.clone())?;
+    let config = Config::load_config(cli.config.as_ref())?;
 
     let data = if let Some(ref file) = cli.file {
-        fs::read(file).context("Invalid file path")?
+        let data = fs::read(file).context("Invalid file path")?;
+        eprintln!(
+            "Read {} from {}",
+            humanize_bytes_binary!(data.len()),
+            file.display()
+        );
+        data
     } else {
         let mut buf = Vec::new();
         let bytes = stdin()
             .read_to_end(&mut buf)
             .context("Unable to read from STDIN")?;
-        eprintln!("Read {} bytes from STDIN", bytes);
+        eprintln!("Read {} from STDIN", humanize_bytes_binary!(bytes));
         buf
     };
 
@@ -77,20 +84,16 @@ fn main() -> anyhow::Result<()> {
         eprintln!("Content type not specified when using STDIN, so using 'text/plain'");
         mime::TEXT_PLAIN
     } else {
-        let file = cli.file.clone().expect("checked above");
-        let mimetype = mime_guess::from_path(&file).first();
+        let file = cli.file.as_ref().expect("checked above");
+        let mimetype = mime_guess::from_path(file).first();
 
         if let Some(mt) = mimetype {
             eprintln!("Using mimetype {} from file extension.", mt);
             mt
         } else {
             eprintln!("Unable to guess mimetype from file extension, using 'text/plain'.");
-            mime::Mime::from_str(
-                &cli.content_type
-                    .clone()
-                    .unwrap_or_else(|| "text/plain".into()),
-            )
-            .context("Unable to parse mime from configuration.")?
+            mime::Mime::from_str(config.content_type.as_deref().unwrap_or("text/plain"))
+                .context("Unable to parse mime from configuration.")?
         }
     };
 
@@ -118,7 +121,7 @@ fn main() -> anyhow::Result<()> {
                 (data, false)
             }
             Ok(zipped_data) => {
-                eprintln!("Zipped into {} bytes", zipped_data.len());
+                eprintln!("Zipped into {}", humanize_bytes_binary!(zipped_data.len()));
                 // Since zipping doesn't work on smalller files, we don't always zip.
                 if zipped_data.len() > data.len() {
                     eprintln!(
@@ -163,13 +166,14 @@ fn main() -> anyhow::Result<()> {
 
     if cli.json {
         let prog_out = ProgramOutput {
-            key: key.clone(),
+            key: &key,
+            // TODO: Remove this compare and just store the service somewhere
             service: if url_set == PASTES {
                 Service::Pastes
             } else {
                 Service::Bytebin
             },
-            url: format!("{}{}", url_set.gui, key),
+            url: &format!("{}{}", url_set.gui, key),
             zipped,
         };
 

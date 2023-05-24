@@ -50,10 +50,10 @@ impl Config {
         }
     }
 
-    pub fn load_config(path: Option<PathBuf>) -> anyhow::Result<Self> {
-        let config_path = match path {
+    pub fn load_config(path: Option<&PathBuf>) -> anyhow::Result<Self> {
+        let contents = match path {
             // Path has been specified, so let's use that one
-            Some(path) => path,
+            Some(path) => fs::read_to_string(path),
 
             // Path was not specified, so let's get the default
             None => {
@@ -63,9 +63,11 @@ impl Config {
                     // Log that the path has been created if we can.
                     println!("Created config at {}", config_path.display());
                 }
-                config_path
+                fs::read_to_string(config_path)
             }
-        };
-        Ok(toml::from_str(&fs::read_to_string(config_path)?)?)
+        }
+        .context("unable read from config file")?;
+
+        toml::from_str(&contents).context("unable to parse config")
     }
 }
