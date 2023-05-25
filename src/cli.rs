@@ -13,19 +13,21 @@ pub enum Service {
 /// Pastes is a simple tool to upload files and text to https://pastes.dev or
 /// https://bytebin.lucko.me.
 ///
-/// To use, one need only to run: `pastes my_file.txt` and it upload it to pastes.dev.
+/// To use, one need only to run: `pastes my_file.txt` and it will upload it to pastes.dev or `pastes
+/// my_image.png` and it will upload it to bytebin.
 ///
 /// Additionally, one can specify whether it should upload to pastes.dev or bytebin by using the
-/// --pastes or --bytebin flags.  Note: These are mutually exclusive and will error if both are
+/// `--pastes` or `--bytebin` flags.  Note: These are mutually exclusive and will error if both are
 /// used.
 ///
-/// The intention is for this tool to work nicely in pipelines, as well as completely alone, so
+/// The intention is for this tool to work nicely in pipelines, as well as standalone, so
 /// `cat my_file.txt | pastes` is equivalent to `pastes my_file.txt`
 ///
 /// When using this in a script, I'd recommend using the `--json` flag with `jq`:
 /// `echo "hello" | pastes --json | jq -r '.key'`
 ///
-/// All logging that the program does is sent to STDERR and only the output is sent to STDOUT.
+/// If you run into any issues or have a suggestion, please file an issue at
+/// https://github.com/funnyboy-roks/pastes
 #[derive(Debug, Clone, Parser)]
 #[clap(author, version, about)]
 pub struct Cli {
@@ -53,6 +55,10 @@ pub struct Cli {
     /// The path to the config file
     #[arg(short, long, value_name = "config")]
     pub config: Option<PathBuf>,
+
+    /// Verbose logging
+    #[arg(short, long)]
+    pub verbose: bool,
 
     // TODO:
     ///// When used, will treat the file name or STDIN as a key for pastes.dev or bytebin and print

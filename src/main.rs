@@ -1,3 +1,7 @@
+use crate::{
+    cli::{Cli, Service},
+    config::Config,
+};
 use anyhow::Context;
 use flate2::Compression;
 use humanize_bytes::humanize_bytes_binary;
@@ -10,10 +14,6 @@ use std::{
 
 mod cli;
 mod config;
-
-use cli::Cli;
-
-use crate::{cli::Service, config::Config};
 
 #[derive(Debug, PartialEq, Eq)]
 struct UrlSet {
@@ -58,18 +58,22 @@ fn main() -> anyhow::Result<()> {
 
     let data = if let Some(ref file) = cli.file {
         let data = fs::read(file).context("Invalid file path")?;
-        eprintln!(
-            "Read {} from {}",
-            humanize_bytes_binary!(data.len()),
-            file.display()
-        );
+        if cli.verbose {
+            eprintln!(
+                "Read {} from {}",
+                humanize_bytes_binary!(data.len()),
+                file.display()
+            );
+        }
         data
     } else {
         let mut buf = Vec::new();
         let bytes = stdin()
             .read_to_end(&mut buf)
             .context("Unable to read from STDIN")?;
-        eprintln!("Read {} from STDIN", humanize_bytes_binary!(bytes));
+        if cli.verbose {
+            eprintln!("Read {} from STDIN", humanize_bytes_binary!(bytes));
+        }
         buf
     };
 
@@ -81,17 +85,23 @@ fn main() -> anyhow::Result<()> {
         mt.parse()
             .context("Unable to parse provided content type")?
     } else if cli.file.is_none() {
-        eprintln!("Content type not specified when using STDIN, so using 'text/plain'");
+        if cli.verbose {
+            eprintln!("Content type not specified when using STDIN, so using 'text/plain'");
+        }
         mime::TEXT_PLAIN
     } else {
         let file = cli.file.as_ref().expect("checked above");
         let mimetype = mime_guess::from_path(file).first();
 
         if let Some(mt) = mimetype {
-            eprintln!("Using mimetype {} from file extension.", mt);
+            if cli.verbose {
+                eprintln!("Using mimetype {} from file extension.", mt);
+            }
             mt
         } else {
-            eprintln!("Unable to guess mimetype from file extension, using 'text/plain'.");
+            if cli.verbose {
+                eprintln!("Unable to guess mimetype from file extension, using 'text/plain'.");
+            }
             mime::Mime::from_str(config.content_type.as_deref().unwrap_or("text/plain"))
                 .context("Unable to parse mime from configuration.")?
         }
@@ -108,25 +118,33 @@ fn main() -> anyhow::Result<()> {
         },
     };
 
-    eprintln!("Zipping data...");
+    if cli.verbose {
+        eprintln!("Zipping data...");
+    }
     let mut e = flate2::write::GzEncoder::new(Vec::new(), Compression::default());
 
     let (data, zipped) = if let Err(err) = e.write_all(&data) {
-        eprintln!("Unable to zip data: {}", err);
+        if cli.verbose {
+            eprintln!("Unable to zip data: {}", err);
+        }
         (data, false)
     } else {
         match e.finish() {
             Err(err) => {
-                eprintln!("Unable to zip data: {}", err);
+                if cli.verbose {
+                    eprintln!("Unable to zip data: {}", err);
+                }
                 (data, false)
             }
             Ok(zipped_data) => {
-                eprintln!("Zipped into {}", humanize_bytes_binary!(zipped_data.len()));
+                if cli.verbose {
+                    eprintln!("Zipped into {}", humanize_bytes_binary!(zipped_data.len()));
+                }
                 // Since zipping doesn't work on smalller files, we don't always zip.
                 if zipped_data.len() > data.len() {
-                    eprintln!(
-                        "Since the zipped data was larger than unzipped, sending unzipped data."
-                    );
+                    if cli.verbose {
+                        eprintln!("Since the zipped data was larger than unzipped, sending unzipped data.");
+                    }
                     (data, false)
                 } else {
                     (zipped_data, true)
@@ -135,7 +153,9 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    eprintln!("Uploading...");
+    if cli.verbose {
+        eprintln!("Uploading...");
+    }
     let client = reqwest::blocking::Client::new();
 
     let mut req = client
