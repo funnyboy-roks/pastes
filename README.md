@@ -7,6 +7,8 @@ extension, and thus, whether it should be uploaded to pastebin or
 
 ## Usage
 
+![GIF of usage](./img/usage.gif)
+
 `pastes` can be run as a single command
 
 ```sh
