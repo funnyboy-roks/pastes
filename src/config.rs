@@ -50,7 +50,7 @@ impl Config {
         }
     }
 
-    pub fn load_config(path: Option<&PathBuf>) -> anyhow::Result<Self> {
+    pub async fn load_config(path: Option<&PathBuf>) -> anyhow::Result<Self> {
         let contents = match path {
             // Path has been specified, so let's use that one
             Some(path) => fs::read_to_string(path),
