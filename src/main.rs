@@ -7,11 +7,10 @@ use flate2::Compression;
 use humanize_bytes::humanize_bytes_binary;
 use serde::{Deserialize, Serialize};
 use std::{
-    fs,
-    io::{stdin, stdout, Read, Write},
+    io::{stdout, Write},
     str::FromStr,
 };
-
+use tokio::io::{self, AsyncReadExt};
 mod cli;
 mod config;
 
@@ -51,13 +50,13 @@ struct ProgramOutput<'a> {
     url: &'a str,
     zipped: bool,
 }
-
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+pub async fn main() -> anyhow::Result<()> {
     let cli = Cli::try_parse()?;
-    let config = Config::load_config(cli.config.as_ref())?;
+    let config = Config::load_config(cli.config.as_ref()).await?;
 
     let data = if let Some(ref file) = cli.file {
-        let data = fs::read(file).context("Invalid file path")?;
+        let data = tokio::fs::read(file).await.context("Invalid file path")?;
         if cli.verbose {
             eprintln!(
                 "Read {} from {}",
@@ -68,8 +67,9 @@ fn main() -> anyhow::Result<()> {
         data
     } else {
         let mut buf = Vec::new();
-        let bytes = stdin()
+        let bytes = io::stdin()
             .read_to_end(&mut buf)
+            .await
             .context("Unable to read from STDIN")?;
         if cli.verbose {
             eprintln!("Read {} from STDIN", humanize_bytes_binary!(bytes));
@@ -156,7 +156,7 @@ fn main() -> anyhow::Result<()> {
     if cli.verbose {
         eprintln!("Uploading...");
     }
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
 
     let mut req = client
         .post(url_set.post)
@@ -178,10 +178,11 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let res = req.send().context("Error contacting api")?;
+    let res = req.send().await.context("Error contacting api")?;
 
     let PostResponse { key } = res
         .json()
+        .await
         .context("Unable to parse json response from api.")?;
 
     if cli.json {
